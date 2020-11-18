@@ -1,3 +1,8 @@
+/*
+    Dipika Giri   ID: 1001440380
+    
+*/
+
 // The MIT License (MIT)
 // 
 // Copyright (c) 2020 Trevor Bakker 
@@ -39,6 +44,7 @@
 
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
 
+FILE *pFile; // pointer to fat32 file
 
 int main()
 {
@@ -88,13 +94,34 @@ int main()
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your FAT32 functionality
 
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ ) 
+    // open file
+    if(!strcmp(token[0], "open"))
     {
-      printf("token[%d] = %s\n", token_index, token[token_index] );  
+      // OPEN FAT32 IMAGE
+      
+    }
+    else if(!strcmp(token[0],"close"))
+    {
+
+    }
+    else if(!strcmp(token[0], "info"))
+    {
+
+    }
+    else if(!strcmp(token[0],"stat"))
+    {
+
+    }
+    else if(!strcmp(token[0], "cd"))
+    {
+
+    }
+    else
+    {
+      printf("Entered command is not supported\n");
+      continue;
     }
     
-
     free( working_root );
 
   }
