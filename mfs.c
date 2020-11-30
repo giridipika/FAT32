@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-// #include <sys/wait.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -95,7 +95,7 @@ int FirstSectorofCluster(int32_t sector)
 void open_fat32_image(char* filename)
 {
   pFile = fopen(filename, "r");
-  if(pFile = NULL)
+  if(pFile == NULL)
   {
     printf("Error: File system image not fount.\n");
     return;
