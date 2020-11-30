@@ -46,6 +46,33 @@
 
 FILE *pFile; // pointer to fat32 file
 
+struct DirectoryEntry
+{
+  char DIR_Name[11];
+  uint8_t DIR_Attr;
+  uint8_t Unused1[8];
+  uint16_t DIR_FirstClusterHigh;
+  uint8_t Unused2[4];
+  uint16_t DIR_FirstClusterLow;
+  uint32_t DIR_FileSize;
+};
+struct DirectoryEntry dir[16];
+
+// Variables of FAT32
+char BS_OEMName[8];      // OEM name
+int16_t BPB_BytesPerSec; // bytes per sec
+int8_t BPB_SecPerClus;   // sec per cluster
+int16_t BPB_RsvdSecCnt;  // number of reserved sectors in reserved region
+int8_t BPB_NumFATs;      // number of FAT data structures
+int16_t BPB_RootEntCnt;  // number of 32 byte directories in the root 
+char BS_VolLab[11];
+int32_t BPB_FATSz32;     // number of sectors contained in one FAT
+int32_t BPB_RootClus;    // number of the first cluster of RD
+
+int32_t RootDirAddr = 0; // root dir
+int32_t CurrDirAddr = 0; // current dir
+
+bool opened = false;
 int main()
 {
 
@@ -98,7 +125,16 @@ int main()
     if(!strcmp(token[0], "open"))
     {
       // OPEN FAT32 IMAGE
-      
+      if(!opened)
+      {
+        open_fat32_image(token[1]); // function to open fat32 image. 
+      }
+      // FAT32 IMAGE ALREADY OPENED
+      else
+      {
+        printf("Error: File system image already opened.\n");
+      }
+      continue;
     }
     else if(!strcmp(token[0],"close"))
     {
