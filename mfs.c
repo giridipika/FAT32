@@ -29,11 +29,13 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/wait.h>
+// #include <sys/wait.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <ctype.h>
+#include <stdint.h>
 
 #define MAX_NUM_ARGUMENTS 3
 
@@ -43,6 +45,7 @@
                                 // will separate the tokens on our command line
 
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
+
 
 FILE *pFile; // pointer to fat32 file
 
@@ -69,10 +72,46 @@ char BS_VolLab[11];
 int32_t BPB_FATSz32;     // number of sectors contained in one FAT
 int32_t BPB_RootClus;    // number of the first cluster of RD
 
-int32_t RootDirAddr = 0; // root dir
-int32_t CurrDirAddr = 0; // current dir
+int32_t RootDirSectors = 0;
+int32_t FirstDataSector = 0;
+int32_t FistSectorofCluster = 0; 
+ 
+int32_t CurrentDirectory = 0;
 
-bool opened = false;
+
+int opened = 0;
+
+// opens FAT32 Image
+void open_fat32_image(char* filename)
+{
+  pFile = fopen(filename, "r");
+  if(pFile = NULL)
+  {
+    printf("Error: File system image not fount.\n");
+    return;
+  }
+  else
+  {
+    opened = 1;
+    fseek(pFile, 3, SEEK_SET);
+    fread(&BS_OEMName, 8, 1, pFile);
+
+    fseek(pFile, 11, SEEK_SET);
+    fread(&BPB_BytesPerSec, 2, 1, pFile);
+    fread(&BPB_SecPerClus, 1, 1, pFile);
+    fread(&BPB_RsvdSecCnt, 2, 1, pFile);
+    fread(&BPB_NumFATs, 1, 1, pFile);
+    fread(&BPB_RootEntCnt, 2, 1, pFile);
+
+    fseek(pFile, 36, SEEK_SET);
+    fread(&BPB_FATSz32, 4, 1, pFile);
+
+    fseek(pFile, 44, SEEK_SET);
+    fread(&BPB_RootClus, 4, 1, pFile);
+    CurrentDirectory = BPB_RootClus;
+  }
+}
+
 int main()
 {
 
