@@ -81,6 +81,16 @@ int32_t CurrentDirectory = 0;
 
 int opened = 0;
 
+// Figure out where root dir starts in data region
+int FirstSectorofCluster(int32_t sector)
+{
+  if(sector == 0)
+  {
+    sector = 2;
+  }
+  return ((sector-2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+}
+
 // opens FAT32 Image
 void open_fat32_image(char* filename)
 {
@@ -109,6 +119,10 @@ void open_fat32_image(char* filename)
     fseek(pFile, 44, SEEK_SET);
     fread(&BPB_RootClus, 4, 1, pFile);
     CurrentDirectory = BPB_RootClus;
+
+    int offset = FirstSectorofCluster(CurrentDirectory);
+    fseek(pFile, offset, SEEK_SET);
+    fread(&dir[0], 32, 16, pFile);
   }
 }
 
