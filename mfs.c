@@ -4,19 +4,19 @@
 */
 
 // The MIT License (MIT)
-// 
-// Copyright (c) 2020 Trevor Bakker 
-// 
+//
+// Copyright (c) 2020 Trevor Bakker
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/wait.h>
+// #include <sys/wait.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -39,13 +39,12 @@
 
 #define MAX_NUM_ARGUMENTS 3
 
-#define WHITESPACE " \t\n"      // We want to split our command line up into tokens
-                                // so we need to define what delimits our tokens.
-                                // In this case  white space
-                                // will separate the tokens on our command line
+#define WHITESPACE " \t\n" // We want to split our command line up into tokens \
+                           // so we need to define what delimits our tokens.   \
+                           // In this case  white space                        \
+                           // will separate the tokens on our command line
 
-#define MAX_COMMAND_SIZE 255    // The maximum command-line size
-
+#define MAX_COMMAND_SIZE 255 // The maximum command-line size
 
 FILE *pFile; // pointer to fat32 file
 
@@ -67,35 +66,78 @@ int16_t BPB_BytesPerSec; // bytes per sec
 int8_t BPB_SecPerClus;   // sec per cluster
 int16_t BPB_RsvdSecCnt;  // number of reserved sectors in reserved region
 int8_t BPB_NumFATs;      // number of FAT data structures
-int16_t BPB_RootEntCnt;  // number of 32 byte directories in the root 
+int16_t BPB_RootEntCnt;  // number of 32 byte directories in the root
 char BS_VolLab[11];
-int32_t BPB_FATSz32;     // number of sectors contained in one FAT
-int32_t BPB_RootClus;    // number of the first cluster of RD
+int32_t BPB_FATSz32;  // number of sectors contained in one FAT
+int32_t BPB_RootClus; // number of the first cluster of RD
 
 int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
-int32_t FistSectorofCluster = 0; 
- 
-int32_t CurrentDirectory = 0;
+int32_t FistSectorofCluster = 0;
 
+int32_t CurrentDirectory = 0;
 
 int opened = 0;
 
 // Figure out where root dir starts in data region
 int FirstSectorofCluster(int32_t sector)
 {
-  if(sector == 0)
+  if (sector == 0)
   {
     sector = 2;
   }
-  return ((sector-2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+  return ((sector - 2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+}
+void decToHex(int n)
+{
+  char hex[100];
+  int i = 1;
+  int j;
+  int temp;
+  while (n != 0)
+  {
+    temp = n % 16;
+    if (temp < 10)
+    {
+      temp += 48;
+    }
+    else
+    {
+      temp += 55;
+    }
+    hex[i++] = temp;
+    n /= 16;
+  }
+  for (j = i - 1; j > 0; j--)
+  {
+    printf("%c", hex[j]);
+  }
+}
+// Displays info about file system in hex and base 10
+void show_info()
+{
+  printf("BPB_BytesPerSec: %d - ", BPB_BytesPerSec);
+  decToHex(BPB_BytesPerSec);
+  printf("\n");
+  printf("BPB_SecPerClus: %d - ", BPB_SecPerClus);
+  decToHex(BPB_SecPerClus);
+  printf("\n");
+  printf("BPB_RsvdSecCnt: %d - ", BPB_RsvdSecCnt);
+  decToHex(BPB_RsvdSecCnt);
+  printf("\n");
+  printf("BPB_NumFATs: %d - ", BPB_NumFATs);
+  decToHex(BPB_NumFATs);
+  printf("\n");
+  printf("BPB_FATSz32: %d - ", BPB_FATSz32);
+  decToHex(BPB_FATSz32);
+  printf("\n");
 }
 
-// opens FAT32 Image
-void open_fat32_image(char* filename)
+// Opens FAT32 Image
+void open_fat32_image(char *filename)
 {
   pFile = fopen(filename, "r");
-  if(pFile == NULL)
+  if (pFile == NULL)
   {
     printf("Error: File system image not fount.\n");
     return;
@@ -129,30 +171,31 @@ void open_fat32_image(char* filename)
 int main()
 {
 
-  char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
+  char *cmd_str = (char *)malloc(MAX_COMMAND_SIZE);
 
-  while( 1 )
+  while (1)
   {
     // Print out the mfs prompt
-    printf ("mfs> ");
+    printf("mfs> ");
 
     // Read the command from the commandline.  The
     // maximum command that will be read is MAX_COMMAND_SIZE
     // This while command will wait here until the user
     // inputs something since fgets returns NULL when there
     // is no input
-    while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
+    while (!fgets(cmd_str, MAX_COMMAND_SIZE, stdin))
+      ;
 
     /* Parse input */
     char *token[MAX_NUM_ARGUMENTS];
 
-    int   token_count = 0;                                 
-                                                           
+    int token_count = 0;
+
     // Pointer to point to the token
     // parsed by strsep
-    char *arg_ptr;                                         
-                                                           
-    char *working_str  = strdup( cmd_str );                
+    char *arg_ptr;
+
+    char *working_str = strdup(cmd_str);
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
@@ -160,27 +203,30 @@ int main()
     char *working_root = working_str;
 
     // Tokenize the input stringswith whitespace used as the delimiter
-    while ( ( (arg_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) && 
-              (token_count<MAX_NUM_ARGUMENTS))
+    while (((arg_ptr = strsep(&working_str, WHITESPACE)) != NULL) &&
+           (token_count < MAX_NUM_ARGUMENTS))
     {
-      token[token_count] = strndup( arg_ptr, MAX_COMMAND_SIZE );
-      if( strlen( token[token_count] ) == 0 )
+      token[token_count] = strndup(arg_ptr, MAX_COMMAND_SIZE);
+      if (strlen(token[token_count]) == 0)
       {
         token[token_count] = NULL;
       }
-        token_count++;
+      token_count++;
     }
 
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your FAT32 functionality
-
+    if (token[0] == NULL)
+    {
+      return;
+    }
     // open file
-    if(!strcmp(token[0], "open"))
+    if (!strcmp(token[0], "open"))
     {
       // OPEN FAT32 IMAGE
-      if(!opened)
+      if (!opened)
       {
-        open_fat32_image(token[1]); // function to open fat32 image. 
+        open_fat32_image(token[1]); // function to open fat32 image.
       }
       // FAT32 IMAGE ALREADY OPENED
       else
@@ -189,30 +235,48 @@ int main()
       }
       continue;
     }
-    else if(!strcmp(token[0],"close"))
+    else if (pFile == NULL)
     {
-
     }
-    else if(!strcmp(token[0], "info"))
+    else if (!strcmp(token[0], "close"))
     {
-
+      // Close FAT32 image
+      // Error: not opened
+      if(!opened)
+      {
+        printf("Error: File System image not opened.\n");
+      }
+      else
+      {
+        fclose(pFile);
+        opened = 0;;
+      }
+      continue;
     }
-    else if(!strcmp(token[0],"stat"))
+    else if (!strcmp(token[0], "bpb"))
     {
-
+      if (!opened)
+      {
+        printf("Error: File System image not opened.\n");
+      }
+      else
+      {
+        show_info();
+      }
+      continue;
     }
-    else if(!strcmp(token[0], "cd"))
+    else if (!strcmp(token[0], "stat"))
     {
-
+    }
+    else if (!strcmp(token[0], "cd"))
+    {
     }
     else
     {
       printf("Entered command is not supported\n");
       continue;
     }
-    
-    free( working_root );
-
+    free(working_root);
   }
   return 0;
 }
