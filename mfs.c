@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-// #include <sys/wait.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -113,6 +113,38 @@ void decToHex(int n)
     printf("%c", hex[j]);
   }
 }
+// Reads from the given file at the position, in bytes, specified by the position parameter and output
+// the number of bytes specified.
+void read_image(char *dirname, int position, int numbytes)
+{
+
+}
+// Lists the directory contents.
+void print_directory()
+{
+  int offset = FirstSectorofCluster(CurrentDirectory);
+  fseek(pFile, offset, SEEK_SET);
+  int i;
+  for (i = 0; i < 16; i++)
+  {
+    fread(&dir[i], 32, 1, pFile);
+    if ((dir[i].DIR_Name[0] != (char)0xe5) &&
+        (dir[i].DIR_Attr == 0x1 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20))
+    {
+      printf("%s\n", dir[i].DIR_Name);
+    }
+  }
+}
+// Prints the attributes and starting cluster number of the file or directory name.
+void show_stat(char fileordir)
+{
+  char expanded_name[13];
+  int filefound;
+  //check if it is a file or directory
+  char *tok = strtok(fileordir, ".");
+  strcpy(expanded_name, tok);
+  tok = strtok(NULL, "");
+}
 // Displays info about file system in hex and base 10
 void show_info()
 {
@@ -132,7 +164,6 @@ void show_info()
   decToHex(BPB_FATSz32);
   printf("\n");
 }
-
 // Opens FAT32 Image
 void open_fat32_image(char *filename)
 {
@@ -167,7 +198,6 @@ void open_fat32_image(char *filename)
     fread(&dir[0], 32, 16, pFile);
   }
 }
-
 int main()
 {
 
@@ -237,19 +267,21 @@ int main()
     }
     else if (pFile == NULL)
     {
+      printf("Error: File system image mush be opened first.\n");
     }
     else if (!strcmp(token[0], "close"))
     {
       // Close FAT32 image
       // Error: not opened
-      if(!opened)
+      if (!opened)
       {
         printf("Error: File System image not opened.\n");
       }
       else
       {
         fclose(pFile);
-        opened = 0;;
+        opened = 0;
+        ;
       }
       continue;
     }
@@ -267,9 +299,42 @@ int main()
     }
     else if (!strcmp(token[0], "stat"))
     {
+      if (!opened)
+      {
+        printf("Error: File System image not opened.\n");
+      }
+      else
+      {
+        show_stat(token[1]);  // NEEDS EDITING!!
+      }
+      continue;
+    }
+    else if (!strcmp(token[0], "ls"))
+    {
+      if (!opened)
+      {
+        printf("Error: File System image not opened.\n");
+      }
+      else
+      {
+        print_directory();  // DEBUG
+      }
+      continue;
     }
     else if (!strcmp(token[0], "cd"))
     {
+    }
+    else if (!strcmp(token[0], "read"))
+    {
+      if(!opened)
+      {
+        printf("Error: File system image not opened.\n");
+      }
+      else
+      {
+        read_image(token[1], token[2], token[3]);  // NEEDS EDITING!!
+      }
+      continue;
     }
     else
     {
