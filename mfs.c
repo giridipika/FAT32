@@ -35,7 +35,7 @@
 #include <string.h>
 #include <signal.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <stdint.h>b
 
 #define MAX_NUM_ARGUMENTS 3
 
@@ -117,21 +117,22 @@ void decToHex(int n)
 // the number of bytes specified.
 void read_image(char *dirname, int position, int numbytes)
 {
-
 }
 // Lists the directory contents.
 void print_directory()
 {
   int offset = FirstSectorofCluster(CurrentDirectory);
   fseek(pFile, offset, SEEK_SET);
-  int i;
-  for (i = 0; i < 16; i++)
+  for(int i = 0; i < 16; i++)
   {
     fread(&dir[i], 32, 1, pFile);
     if ((dir[i].DIR_Name[0] != (char)0xe5) &&
         (dir[i].DIR_Attr == 0x1 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20))
     {
-      printf("%s\n", dir[i].DIR_Name);
+      // 
+      char *direc = malloc(11);
+      strcpy(direc, dir[i].DIR_Name, 11);
+      printf("%s\n", direc);
     }
   }
 }
@@ -305,7 +306,7 @@ int main()
       }
       else
       {
-        show_stat(token[1]);  // NEEDS EDITING!!
+        show_stat(token[1]); // NEEDS EDITING!!
       }
       continue;
     }
@@ -317,7 +318,7 @@ int main()
       }
       else
       {
-        print_directory();  // DEBUG
+        print_directory(); // DEBUG
       }
       continue;
     }
@@ -326,15 +327,19 @@ int main()
     }
     else if (!strcmp(token[0], "read"))
     {
-      if(!opened)
+      if (!opened)
       {
         printf("Error: File system image not opened.\n");
       }
       else
       {
-        read_image(token[1], token[2], token[3]);  // NEEDS EDITING!!
+        read_image(token[1], token[2], token[3]); // NEEDS EDITING!!
       }
       continue;
+    }
+    else if (!strcmp(token[0], "exit"))
+    {
+      return 0;
     }
     else
     {
