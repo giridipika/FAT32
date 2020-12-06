@@ -120,7 +120,6 @@ int compare(char *userString, char *directoryString)
   }
   return 0;
 }
-
 // Figure out where root dir starts in data region
 int FirstSectorofCluster(int32_t sector)
 {
@@ -240,7 +239,6 @@ void open_fat32_image(char *filename)
     fread(&dir[0], 32, 16, pFile);
   }
 }
-
 int stat(char *fileName)
 {
   int i;
