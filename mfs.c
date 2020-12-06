@@ -80,12 +80,6 @@ int32_t CurrentDirectory = 0;
 
 int opened = 0;
 
-int32_t LBAToOffset(int32_t sector)
-{
-  return ((sector-2)*BPB_BytesPerSec) + (BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec) +
-  (BPB_RsvdSecCnt*BPB_BytesPerSec);
-}
-
 int16_t NextLB(int32_t sector)
 {
   uint32_t FATAddress = (BPB_BytesPerSec*BPB_RsvdSecCnt) + (sector*4);
@@ -127,10 +121,11 @@ int compare(char *userString, char *directoryString)
   {
     expanded_name[i] = toupper(expanded_name[i]);
   }
-  /*if (strncmp(expanded_name, IMG_Name, 11) == 0)
+  if (strncmp(expanded_name, IMG_Name, 11) == 0)
   {
-    printf("They matched\n");
-  }*/
+    //printf("They matched\n");
+    return 1;
+  }
   return 0;
 }
 // Figure out where root dir starts in data region
@@ -140,7 +135,8 @@ int FirstSectorofCluster(int32_t sector)
   {
     sector = 2;
   }
-  return ((sector - 2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+  return ((sector - 2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + 
+  (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
 }
 void decToHex(int n)
 {
@@ -234,8 +230,8 @@ void open_fat32_image(char *filename)
   {
     opened = 1;
   }
-    fseek(pFile, 3, SEEK_SET);
-    fread(&BS_OEMName, 8, 1, pFile);
+    //fseek(pFile, 3, SEEK_SET);
+    //fread(&BS_OEMName, 8, 1, pFile);
 
     fseek(pFile, 11, SEEK_SET);
     fread(&BPB_BytesPerSec, 1, 2, pFile);
@@ -273,7 +269,7 @@ int stat(char *fileName)
   for (i = 0; i < NUM_ENTRIES; i++)
   {
     // printf("%d\n", compare(fileName, dir[i].DIR_Name));
-    if (compare(fileName, dir[i].DIR_Name) == 0)
+    if (compare(fileName, dir[i].DIR_Name))
     {
       printf("%s Attribute: %d Size: %d Cluster: %d\n", fileName, dir[i].DIR_Attr,
              dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
@@ -299,14 +295,14 @@ int change_directory(char *directoryName)
   int found = 0;
   for(i=0;i<NUM_ENTRIES;i++)
   {
-    if(compare(directoryName,dir[i].DIR_Name) == 0)
+    if(compare(directoryName,dir[i].DIR_Name))
     {
       int cluster = dir[i].DIR_FirstClusterLow;
       if(cluster == 0)
       {
         cluster = 2;
       }
-      int offset = LBAToOffset(cluster);
+      int offset = FirstSectorofCluster(cluster);
       fseek(pFile,offset,SEEK_SET);
       fread(dir,sizeof(struct DirectoryEntry),NUM_ENTRIES,pFile);
 
@@ -441,7 +437,6 @@ int main()
       }
       else
       {
-        printf("HERE\n");
         print_directory();
       }
       continue;
