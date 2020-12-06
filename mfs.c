@@ -392,7 +392,7 @@ int main()
       }
       else
       {
-        change_directory(); // NEEDS EDITING
+        // change_directory(); // NEEDS EDITING
       }
       continue;
     }
@@ -416,7 +416,7 @@ int main()
       }
       else
       {
-        get(token[1], token[2], token[3]); // NEEDS EDITING!!
+        // get(token[1], token[2], token[3]); // NEEDS EDITING!!
       }
       continue;
     }
@@ -432,5 +432,4 @@ int main()
     free(working_root);
   }
   return 0;
-  //works
 }
