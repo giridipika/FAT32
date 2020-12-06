@@ -370,7 +370,7 @@ int main()
       }
       else
       {
-        stat(token[1]);
+        stat(token[1]); // DEBUG
       }
       continue;
     }
@@ -394,7 +394,7 @@ int main()
       }
       else
       {
-        print_directory();
+        change_directory(); // NEEDS EDITING
       }
       continue;
     }
@@ -407,6 +407,18 @@ int main()
       else
       {
         read_image(token[1], token[2], token[3]); // NEEDS EDITING!!
+      }
+      continue;
+    }
+    else if (!strcmp(token[0], "get"))
+    {
+      if (!opened)
+      {
+        printf("Error: File system image not opened.\n");
+      }
+      else
+      {
+        get(token[1], token[2], token[3]); // NEEDS EDITING!!
       }
       continue;
     }
