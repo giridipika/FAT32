@@ -185,7 +185,7 @@ void print_directory()
   }
 }
 // Prints the attributes and starting cluster number of the file or directory name.
-void show_stat(char fileordir)
+/*void show_stat(char fileordir)
 {
   char expanded_name[13];
   int filefound;
@@ -193,7 +193,7 @@ void show_stat(char fileordir)
   char *tok = strtok(fileordir, ".");
   strcpy(expanded_name, tok);
   tok = strtok(NULL, "");
-}
+}*/
 // Displays info about file system in hex and base 10
 void show_info()
 {
@@ -367,7 +367,7 @@ int main()
       }
       continue;
     }
-    else if (!strcmp(token[0], "stat"))
+    /*else if (!strcmp(token[0], "stat"))
     {
       if (!opened)
       {
@@ -378,7 +378,7 @@ int main()
         show_stat(token[1]); // NEEDS EDITING!!
       }
       continue;
-    }
+    }*/
     else if (!strcmp(token[0], "ls"))
     {
       if (!opened)
