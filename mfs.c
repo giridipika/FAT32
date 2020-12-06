@@ -38,6 +38,7 @@
 #include <stdint.h>b
 
 #define MAX_NUM_ARGUMENTS 3
+#define NUM_ENTRIES 16
 
 #define WHITESPACE " \t\n" // We want to split our command line up into tokens \
                            // so we need to define what delimits our tokens.   \
@@ -78,6 +79,53 @@ int32_t FistSectorofCluster = 0;
 int32_t CurrentDirectory = 0;
 
 int opened = 0;
+
+int compare(char *userString, char *directoryString)
+{
+  char *dots = "..";
+  if(strncmp(dots,userString,2) == 0)
+  {
+    if(strncmp(userString,directoryString,2) == 0)
+    {
+      return 1;
+    }
+    return 0;
+  }
+  char IMG_Name[12];
+
+  char input[11];
+  memset(input,0,11);
+  strncpy(input,userString,strlen(userString));
+
+  char expanded_name[12];
+  memset( expanded_name, ' ', 12 );
+
+  char *token = strtok( input, "." );
+
+  strncpy( expanded_name, token, strlen( token ) );
+
+  token = strtok( NULL, "." );
+
+  if( token )
+  {
+    strncpy( (char*)(expanded_name+8), token, strlen(token ) );
+  }
+
+  expanded_name[11] = '\0';
+
+  int i;
+  for( i = 0; i < 11; i++ )
+  {
+    expanded_name[i] = toupper( expanded_name[i] );
+  }
+
+  if( strncmp( expanded_name, IMG_Name, 11 ) == 0 )
+  {
+    printf("They matched\n");
+  }
+
+  return 0;
+}
 
 // Figure out where root dir starts in data region
 int FirstSectorofCluster(int32_t sector)
@@ -131,7 +179,7 @@ void print_directory()
     {
       // 
       char *direc = malloc(11);
-      strcpy(direc, dir[i].DIR_Name, 11);
+      strncpy(direc, dir[i].DIR_Name, 11);
       printf("%s\n", direc);
     }
   }
@@ -199,6 +247,27 @@ void open_fat32_image(char *filename)
     fread(&dir[0], 32, 16, pFile);
   }
 }
+
+int stat(char *fileName)
+{
+  int i;
+  int found = 0;
+  for(i=0;i<NUM_ENTRIES;i++)
+  {
+    if(compare(fileName,dir[i].DIR_Name))
+    {
+      printf("%s Attribute: %d Size: %d Cluster: %d\n", fileName,dir[i].DIR_Attr,
+      dir[i].DIR_FileSize,dir[i].DIR_FirstClusterLow);
+      found = 1;
+    }
+  }
+  if(!found)
+  {
+    printf("File is not found!\n");
+  }
+  return 0;
+}
+
 int main()
 {
 
@@ -336,6 +405,17 @@ int main()
         read_image(token[1], token[2], token[3]); // NEEDS EDITING!!
       }
       continue;
+    }
+    else if(!strcmp(token[0], "stat"))
+    {
+      if(opened)
+      {
+        stat(token[1]);
+      }
+      else
+      {
+        printf("Error occured, File is not opened!");
+      }
     }
     else if (!strcmp(token[0], "exit"))
     {
