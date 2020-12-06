@@ -176,8 +176,8 @@ void read_image(char *dirname, int position, int numbytes)
 // Lists the directory contents.
 int print_directory()
 {
-  int offset = FirstSectorofCluster(CurrentDirectory);
-  fseek(pFile, offset, SEEK_SET);
+  //int offset = FirstSectorofCluster(CurrentDirectory);
+  //fseek(pFile, offset, SEEK_SET);
   for (int i = 0; i < 16; i++)
   {
     char direc[12];
@@ -441,6 +441,7 @@ int main()
       }
       else
       {
+        printf("HERE\n");
         print_directory();
       }
       continue;
