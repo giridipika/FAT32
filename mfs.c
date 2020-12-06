@@ -25,8 +25,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-//HELLO THIS IS A TEST IF ITS WORKING
-
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -82,6 +80,21 @@ int32_t CurrentDirectory = 0;
 
 int opened = 0;
 
+int32_t LBAToOffset(int32_t sector)
+{
+  return ((sector-2)*BPB_BytesPerSec) + (BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec) +
+  (BPB_RsvdSecCnt*BPB_BytesPerSec);
+}
+
+int16_t NextLB(int32_t sector)
+{
+  uint32_t FATAddress = (BPB_BytesPerSec*BPB_RsvdSecCnt) + (sector*4);
+  int16_t value;
+  fseek(pFile,FATAddress,SEEK_SET);
+  fread(&value,2,1,pFile);
+  return value;
+}
+
 int compare(char *userString, char *directoryString)
 {
   char *dots = "..";
@@ -114,10 +127,10 @@ int compare(char *userString, char *directoryString)
   {
     expanded_name[i] = toupper(expanded_name[i]);
   }
-  if (strncmp(expanded_name, IMG_Name, 11) == 0)
+  /*if (strncmp(expanded_name, IMG_Name, 11) == 0)
   {
     printf("They matched\n");
-  }
+  }*/
   return 0;
 }
 // Figure out where root dir starts in data region
@@ -161,21 +174,23 @@ void read_image(char *dirname, int position, int numbytes)
 {
 }
 // Lists the directory contents.
-void print_directory()
+int print_directory()
 {
   int offset = FirstSectorofCluster(CurrentDirectory);
   fseek(pFile, offset, SEEK_SET);
   for (int i = 0; i < 16; i++)
   {
-    fread(&dir[i], 32, 1, pFile);
+    char direc[12];
+    strncpy(direc, dir[i].DIR_Name, 11);
+    direc[11] = '\0';
+    //fread(&dir[i], 32, 1, pFile);
     if ((dir[i].DIR_Name[0] != 0xffffffe5) &&
-        (dir[i].DIR_Attr == 0x1 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20))
+        (dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20))
     {
-      char *direc = malloc(11);
-      strncpy(direc, dir[i].DIR_Name, 11);
       printf("%s\n", direc);
     }
   }
+  return 0;
 }
 // Prints the attributes and starting cluster number of the file or directory name.
 /*void show_stat(char fileordir)
@@ -212,24 +227,34 @@ void open_fat32_image(char *filename)
   pFile = fopen(filename, "r");
   if (pFile == NULL)
   {
-    printf("Error: File system image not fount.\n");
+    printf("Error: File system image not found.\n");
     return;
   }
   else
   {
     opened = 1;
+  }
     fseek(pFile, 3, SEEK_SET);
     fread(&BS_OEMName, 8, 1, pFile);
 
     fseek(pFile, 11, SEEK_SET);
-    fread(&BPB_BytesPerSec, 2, 1, pFile);
+    fread(&BPB_BytesPerSec, 1, 2, pFile);
+    fseek(pFile, 13, SEEK_SET);
     fread(&BPB_SecPerClus, 1, 1, pFile);
-    fread(&BPB_RsvdSecCnt, 2, 1, pFile);
-    fread(&BPB_NumFATs, 1, 1, pFile);
-    fread(&BPB_RootEntCnt, 2, 1, pFile);
-
+    fseek(pFile, 14, SEEK_SET);
+    fread(&BPB_RsvdSecCnt, 1, 2, pFile);
+    fseek(pFile, 16, SEEK_SET);
+    fread(&BPB_NumFATs, 1, 2, pFile);
     fseek(pFile, 36, SEEK_SET);
-    fread(&BPB_FATSz32, 4, 1, pFile);
+    fread(&BPB_FATSz32, 1, 4, pFile);
+
+    //rood directory address
+    int rootAddress = (BPB_RsvdSecCnt*BPB_BytesPerSec) + (BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec);
+
+    fseek(pFile,rootAddress,SEEK_SET);
+    fread(dir,sizeof(struct DirectoryEntry),16,pFile);
+    
+    fread(&BPB_RootEntCnt, 2, 1, pFile);
 
     fseek(pFile, 44, SEEK_SET);
     fread(&BPB_RootClus, 4, 1, pFile);
@@ -238,8 +263,9 @@ void open_fat32_image(char *filename)
     int offset = FirstSectorofCluster(CurrentDirectory);
     fseek(pFile, offset, SEEK_SET);
     fread(&dir[0], 32, 16, pFile);
-  }
 }
+
+//Prints the attributes and starting cluster number of the file or directory name
 int stat(char *fileName)
 {
   int i;
@@ -259,6 +285,41 @@ int stat(char *fileName)
   {
     printf("Error: File is not found!\n");
   }
+  return 0;
+}
+
+int change_directory(char *directoryName)
+{
+  //loop over the curretn directory and search for the wanted one
+  //set the lower cluster number to 2 if its found and its 0
+  //now we use LBAToOffset to get offset of directory and then fseek to it
+  //then read the directory information in the directory array
+
+  int i;
+  int found = 0;
+  for(i=0;i<NUM_ENTRIES;i++)
+  {
+    if(compare(directoryName,dir[i].DIR_Name) == 0)
+    {
+      int cluster = dir[i].DIR_FirstClusterLow;
+      if(cluster == 0)
+      {
+        cluster = 2;
+      }
+      int offset = LBAToOffset(cluster);
+      fseek(pFile,offset,SEEK_SET);
+      fread(dir,sizeof(struct DirectoryEntry),NUM_ENTRIES,pFile);
+
+      found = 1;
+      break;
+    }
+  }
+  if(!found)
+  {
+    printf("Error: Directory not found\n");
+    return -1;
+  }
+
   return 0;
 }
 
@@ -312,7 +373,7 @@ int main()
     // \TODO Remove this code and replace with your FAT32 functionality
     if (token[0] == NULL)
     {
-      return;
+      continue;
     }
     // open file
     if (!strcmp(token[0], "open"))
@@ -345,7 +406,6 @@ int main()
       {
         fclose(pFile);
         opened = 0;
-        ;
       }
       continue;
     }
@@ -393,7 +453,7 @@ int main()
       }
       else
       {
-        // change_directory(); // NEEDS EDITING
+        change_directory(token[1]); // NEEDS EDITING
       }
       continue;
     }
