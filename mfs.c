@@ -149,9 +149,10 @@ void decToHex(int n)
     hex[i++] = temp;
     n /= 16;
   }
+  printf("0x");
   for (j = i - 1; j > 0; j--)
   {
-    printf("0x%c", hex[j]);
+    printf("%c", hex[j]);
   }
 }
 // Reads from the given file at the position, in bytes, specified by the position parameter and output
