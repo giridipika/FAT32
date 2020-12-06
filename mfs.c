@@ -126,10 +126,9 @@ void print_directory()
   for(int i = 0; i < 16; i++)
   {
     fread(&dir[i], 32, 1, pFile);
-    if ((dir[i].DIR_Name[0] != (char)0xe5) &&
+    if ((dir[i].DIR_Name[0] != 0xffffffe5) &&
         (dir[i].DIR_Attr == 0x1 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20))
     {
-      // 
       char *direc = malloc(11);
       strcpy(direc, dir[i].DIR_Name, 11);
       printf("%s\n", direc);
@@ -318,12 +317,21 @@ int main()
       }
       else
       {
-        print_directory(); // DEBUG
+        print_directory();
       }
       continue;
     }
     else if (!strcmp(token[0], "cd"))
     {
+      if (!opened)
+      {
+        printf("Error: File System image not opened.\n");
+      }
+      else
+      {
+        print_directory();
+      }
+      continue;
     }
     else if (!strcmp(token[0], "read"))
     {
