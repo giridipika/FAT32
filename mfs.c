@@ -169,6 +169,28 @@ void decToHex(int n)
 void read_image(char *dirname, int position, int numbytes)
 {
 }
+//Prints the attributes and starting cluster number of the file or directory name
+int stat(char *fileName)
+{
+  int i;
+  int found = 0;
+  for (i = 0; i < NUM_ENTRIES; i++)
+  {
+    // printf("%d\n", compare(fileName, dir[i].DIR_Name));
+    if (compare(fileName, dir[i].DIR_Name))
+    {
+      printf("%s Attribute: %d Size: %d Cluster: %d\n", fileName, dir[i].DIR_Attr,
+             dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
+      found = 1;
+      break;
+    }
+  }
+  if (!found)
+  {
+    printf("Error: File is not found!\n");
+  }
+  return 0;
+}
 // Lists the directory contents.
 int print_directory()
 {
@@ -261,28 +283,7 @@ void open_fat32_image(char *filename)
     fread(&dir[0], 32, 16, pFile);
 }
 
-//Prints the attributes and starting cluster number of the file or directory name
-int stat(char *fileName)
-{
-  int i;
-  int found = 0;
-  for (i = 0; i < NUM_ENTRIES; i++)
-  {
-    // printf("%d\n", compare(fileName, dir[i].DIR_Name));
-    if (compare(fileName, dir[i].DIR_Name))
-    {
-      printf("%s Attribute: %d Size: %d Cluster: %d\n", fileName, dir[i].DIR_Attr,
-             dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
-      found = 1;
-      break;
-    }
-  }
-  if (!found)
-  {
-    printf("Error: File is not found!\n");
-  }
-  return 0;
-}
+
 
 int change_directory(char *directoryName)
 {
@@ -318,12 +319,9 @@ int change_directory(char *directoryName)
 
   return 0;
 }
-
 int main()
 {
-
   char *cmd_str = (char *)malloc(MAX_COMMAND_SIZE);
-
   while (1)
   {
     // Print out the mfs prompt
