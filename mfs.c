@@ -80,6 +80,13 @@ int32_t CurrentDirectory = 0;
 
 int opened = 0;
 
+// Figure out where root dir starts in data region
+int FirstSectorofCluster(int32_t sector)
+{
+  return (((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 *BPB_BytesPerSec) +
+         (BPB_RsvdSecCnt * BPB_BytesPerSec));
+}
+
 int16_t NextLB(int32_t sector)
 {
   uint32_t FATAddress = (BPB_BytesPerSec * BPB_RsvdSecCnt) + (sector * 4);
@@ -128,12 +135,7 @@ int compare(char *userString, char *directoryString)
   }
   return 0;
 }
-// Figure out where root dir starts in data region
-int FirstSectorofCluster(int32_t sector)
-{
-  return (((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 *BPB_BytesPerSec) +
-         (BPB_RsvdSecCnt * BPB_BytesPerSec));
-}
+
 void decToHex(int n)
 {
   char hex[100];
@@ -161,16 +163,26 @@ void decToHex(int n)
   }
 }
 // Get function
-void get(char *filename, char *newfilename)
+int get(char *filename, char *newfilename)
 {
   FILE *opFile;
-  if (filename == NULL)
+  if (newfilename == NULL)
   {
     opFile = fopen(filename, "w");
+    if(opFile == NULL)
+    {
+      printf("%s could not be opened\n", filename);
+      perror("ERROR Could not open file\n");
+    }
   }
   else
   {
-    opFile = fopen(filename, "w");
+    opFile = fopen(newfilename, "w");
+    if(opFile == NULL)
+    {
+      printf("%s could not be opened\n", newfilename);
+      perror("ERROR Could not open file\n");
+    }
   }
   int i;
   int found = 0;
@@ -179,7 +191,7 @@ void get(char *filename, char *newfilename)
   {
     if (compare(filename, dir[i].DIR_Name))
     {
-      int cluster;
+      int cluster = dir[i].DIR_FirstClusterLow;
       found = 1;
 
       int bytes_remaining = dir[i].DIR_FileSize;
@@ -187,27 +199,31 @@ void get(char *filename, char *newfilename)
       unsigned char buffer[512];
       while (bytes_remaining >= BPB_BytesPerSec)
       {
-        cluster = NextLB(cluster);
         offset = FirstSectorofCluster(cluster);
         fseek(pFile, offset, SEEK_SET);
         fread(buffer, 1, BPB_BytesPerSec, pFile);
 
         fwrite(buffer, 1, 512, opFile);
-
+        cluster = NextLB(cluster);
         bytes_remaining = bytes_remaining - BPB_BytesPerSec;
       }
       if (bytes_remaining)
       {
-        cluster = NextLB(cluster);
         offset = FirstSectorofCluster(cluster);
         fseek(pFile, offset, SEEK_SET);
         fread(buffer, 1, bytes_remaining, pFile);
 
         fwrite(buffer, 1, bytes_remaining, opFile);
       }
-      close(opFile);
+      fclose(opFile);
     }
   }
+  if(!found)
+  {
+    printf("Error: File Not Found!\n");
+    return -1;
+  }
+  return 0;
 }
 // Reads from the given file at the position, in bytes, specified by the position parameter and output
 // the number of bytes specified.
