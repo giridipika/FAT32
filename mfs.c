@@ -131,7 +131,7 @@ int compare(char *userString, char *directoryString)
 // Figure out where root dir starts in data region
 int FirstSectorofCluster(int32_t sector)
 {
-  return ((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 *BPB_BytesPerSec) +
+  return (((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 *BPB_BytesPerSec) +
          (BPB_RsvdSecCnt * BPB_BytesPerSec));
 }
 void decToHex(int n)
