@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#define MAX_NUM_ARGUMENTS 3
+#define MAX_NUM_ARGUMENTS 4
 #define NUM_ENTRIES 16
 
 #define WHITESPACE " \t\n" // We want to split our command line up into tokens \
@@ -83,8 +83,8 @@ int opened = 0;
 // Figure out where root dir starts in data region
 int FirstSectorofCluster(int32_t sector)
 {
-  return (((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 *BPB_BytesPerSec) +
-         (BPB_RsvdSecCnt * BPB_BytesPerSec));
+  return (((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec) +
+          (BPB_RsvdSecCnt * BPB_BytesPerSec));
 }
 
 int16_t NextLB(int32_t sector)
@@ -169,7 +169,7 @@ int get(char *filename, char *newfilename)
   if (newfilename == NULL)
   {
     opFile = fopen(filename, "w");
-    if(opFile == NULL)
+    if (opFile == NULL)
     {
       printf("%s could not be opened\n", filename);
       perror("ERROR Could not open file\n");
@@ -178,7 +178,7 @@ int get(char *filename, char *newfilename)
   else
   {
     opFile = fopen(newfilename, "w");
-    if(opFile == NULL)
+    if (opFile == NULL)
     {
       printf("%s could not be opened\n", newfilename);
       perror("ERROR Could not open file\n");
@@ -189,10 +189,8 @@ int get(char *filename, char *newfilename)
 
   for (i = 0; i < NUM_ENTRIES; i++)
   {
-    printf("%s and %s and %d\n",filename,dir[i].DIR_Name, compare(filename,dir[i].DIR_Name));
     if (compare(filename, dir[i].DIR_Name))
     {
-      printf("%s and %s\n",filename,dir[i].DIR_Name);
       int cluster = dir[i].DIR_FirstClusterLow;
       found = 1;
 
@@ -220,7 +218,7 @@ int get(char *filename, char *newfilename)
       fclose(opFile);
     }
   }
-  if(!found)
+  if (!found)
   {
     printf("Error: File Not Found!\n");
     return -1;
@@ -294,7 +292,7 @@ int read_image(char *dirname, int position, int numofbytes)
       printf("\n");
     }
   }
-  if(!found)
+  if (!found)
   {
     printf("Error: File Not Found!\n");
     return -1;
@@ -537,7 +535,14 @@ int main()
       }
       else
       {
-        stat(token[1]);
+        if (token[1] == NULL)
+        {
+          printf("Enter valid argument.\n");
+        }
+        else
+        {
+          stat(token[1]);
+        }
       }
       continue;
     }
@@ -573,7 +578,7 @@ int main()
       }
       else
       {
-        read_image(token[1], atoi(token[2]), atoi(token[3])); // DEBUG
+        read_image(token[1], atoi(token[2]), atoi(token[3]));
       }
       continue;
     }
@@ -585,13 +590,9 @@ int main()
       }
       else
       {
-        get(token[1], token[2]); // NEEDS EDITING
+        get(token[1], token[2]);
       }
       continue;
-    }
-    else if (!strcmp(token[0], "exit"))
-    {
-      return 0;
     }
     else
     {
