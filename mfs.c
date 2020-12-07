@@ -107,11 +107,11 @@ int compare(char *userString, char *directoryString)
     }
     return 0;
   }
-  char IMG_Name[12];
-  strncpy(IMG_Name, directoryString, 11);
-  IMG_Name[11] = '\0';
-  char input[11];
-  memset(input, 0, 11);
+  char IMG_Name[13];
+  strncpy(IMG_Name, directoryString, 12);
+  IMG_Name[12] = '\0';
+  char input[12];
+  memset(input, 0, 12);
   strncpy(input, userString, strlen(userString));
   char expanded_name[12];
   memset(expanded_name, ' ', 12);
@@ -189,8 +189,10 @@ int get(char *filename, char *newfilename)
 
   for (i = 0; i < NUM_ENTRIES; i++)
   {
+    printf("%s and %s and %d\n",filename,dir[i].DIR_Name, compare(filename,dir[i].DIR_Name));
     if (compare(filename, dir[i].DIR_Name))
     {
+      printf("%s and %s\n",filename,dir[i].DIR_Name);
       int cluster = dir[i].DIR_FirstClusterLow;
       found = 1;
 
