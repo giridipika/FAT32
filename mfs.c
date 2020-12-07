@@ -131,8 +131,8 @@ int compare(char *userString, char *directoryString)
 // Figure out where root dir starts in data region
 int FirstSectorofCluster(int32_t sector)
 {
-  return ((sector - 2) * BPB_BytesPerSec) + (BPB_FATSz32 *BPB_NumFATs * BPB_BytesPerSec) +
-         (BPB_RsvdSecCnt * BPB_BytesPerSec);
+  return ((sector - 2) * BPB_BytesPerSec) + (BPB_NumFATs * BPB_FATSz32 *BPB_BytesPerSec) +
+         (BPB_RsvdSecCnt * BPB_BytesPerSec));
 }
 void decToHex(int n)
 {
@@ -163,7 +163,51 @@ void decToHex(int n)
 // Get function
 void get(char *filename, char *newfilename)
 {
-  
+  FILE *opFile;
+  if (filename == NULL)
+  {
+    opFile = fopen(filename, "w");
+  }
+  else
+  {
+    opFile = fopen(filename, "w");
+  }
+  int i;
+  int found = 0;
+
+  for (i = 0; i < NUM_ENTRIES; i++)
+  {
+    if (compare(filename, dir[i].DIR_Name))
+    {
+      int cluster;
+      found = 1;
+
+      int bytes_remaining = dir[i].DIR_FileSize;
+      int offset = 0;
+      unsigned char buffer[512];
+      while (bytes_remaining >= BPB_BytesPerSec)
+      {
+        cluster = NextLB(cluster);
+        offset = FirstSectorofCluster(cluster);
+        fseek(pFile, offset, SEEK_SET);
+        fread(buffer, 1, BPB_BytesPerSec, pFile);
+
+        fwrite(buffer, 1, 512, opFile);
+
+        bytes_remaining = bytes_remaining - BPB_BytesPerSec;
+      }
+      if (bytes_remaining)
+      {
+        cluster = NextLB(cluster);
+        offset = FirstSectorofCluster(cluster);
+        fseek(pFile, offset, SEEK_SET);
+        fread(buffer, 1, bytes_remaining, pFile);
+
+        fwrite(buffer, 1, bytes_remaining, opFile);
+      }
+      close(opFile);
+    }
+  }
 }
 // Reads from the given file at the position, in bytes, specified by the position parameter and output
 // the number of bytes specified.
@@ -172,7 +216,7 @@ void read_image(char *dirname, int position, int numofbytes)
   int i;
   int found = 0;
   int bytes_remaining = numofbytes;
-  if(position < 0)
+  if (position < 0)
   {
     printf("Error: Offset can not be less than zero.\n");
   }
@@ -217,7 +261,7 @@ void read_image(char *dirname, int position, int numofbytes)
         }
         bytes_remaining = bytes_remaining - BPB_BytesPerSec;
       }
-      if(bytes_remaining)
+      if (bytes_remaining)
       {
         cluster = NextLB(cluster);
         offset = FirstSectorofCluster(cluster);
@@ -469,7 +513,7 @@ int main()
       }
       else
       {
-        stat(token[1]); // DEBUG
+        stat(token[1]);
       }
       continue;
     }
@@ -493,7 +537,7 @@ int main()
       }
       else
       {
-        change_directory(token[1]); 
+        change_directory(token[1]);
       }
       continue;
     }
@@ -517,7 +561,7 @@ int main()
       }
       else
       {
-        get(token[1], token[2]);
+        get(token[1], token[2]); // NEEDS EDITING
       }
       continue;
     }
