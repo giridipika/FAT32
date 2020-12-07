@@ -160,6 +160,11 @@ void decToHex(int n)
     printf("%c", hex[j]);
   }
 }
+// Get function
+void get(char *filename, char *newfilename)
+{
+  
+}
 // Reads from the given file at the position, in bytes, specified by the position parameter and output
 // the number of bytes specified.
 void read_image(char *dirname, int position, int numofbytes)
@@ -512,7 +517,7 @@ int main()
       }
       else
       {
-        // get(token[1], token[2], token[3]); // NEEDS EDITING!!
+        get(token[1], token[2]);
       }
       continue;
     }
